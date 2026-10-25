@@ -5,7 +5,7 @@ async function getDashboardSummary(req, res) {
   try {
     const [membersResult, savingsResult, loansResult, repaymentsResult] = await Promise.all([
       pool.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE status = 'active') AS active FROM members`),
-      pool.query(`SELECT COALESCE(SUM(CASE WHEN transaction_type = 'deposit' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_deposits,
+      pool.query(`SELECT COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'adjustment') AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_deposits,
                          COALESCE(SUM(CASE WHEN transaction_type = 'withdrawal' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_withdrawals
                   FROM savings_transactions`),
       pool.query(`SELECT COUNT(*) AS total,

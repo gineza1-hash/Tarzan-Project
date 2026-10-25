@@ -63,6 +63,14 @@ cp .env.example .env
 npm run migrate
 ```
 
+The migration is safe to run more than once. After the schema is created, load demo data:
+
+```bash
+npm run seed
+```
+
+The seed creates demo admin, treasurer, and member accounts plus savings, loan, and repayment records. Change the demo passwords before using the application outside development.
+
 ### 4. Start the server
 
 ```bash
@@ -123,6 +131,24 @@ npm start         # production
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/ussd` | Africa's Talking callback |
+```
+
+The USSD callback expects Africa's Talking form data (`sessionId`, `phoneNumber`, `serviceCode`, and `text`) and returns plain-text `CON`/`END` responses. Registered members can use:
+
+```text
+1. Savings Balance
+2. Last 3 Transactions
+3. Loan Balance
+4. Repayment History
+0. Exit
+```
+
+For a local contract check:
+
+```bash
+curl -X POST http://localhost:5000/ussd ^
+  -H "Content-Type: application/x-www-form-urlencoded" ^
+  --data "sessionId=test-session&serviceCode=*384*57890%23&phoneNumber=%2B250788000001&text="
 
 **USSD Menu (`*XXX#`):**
 ```

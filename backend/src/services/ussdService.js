@@ -50,7 +50,7 @@ async function handleUSSD({ sessionId, serviceCode, phoneNumber, text }) {
   if (choice === '1') {
     const result = await pool.query(
       `SELECT
-         COALESCE(SUM(CASE WHEN transaction_type = 'deposit' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) -
+         COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'adjustment') AND is_reversed = FALSE THEN amount ELSE 0 END), 0) -
          COALESCE(SUM(CASE WHEN transaction_type = 'withdrawal' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS balance
        FROM savings_transactions
        WHERE member_id = $1`,

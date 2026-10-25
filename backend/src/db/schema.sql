@@ -39,10 +39,17 @@ CREATE TABLE IF NOT EXISTS members (
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Add FK from users to members
-ALTER TABLE users
-    ADD CONSTRAINT fk_users_member
-    FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE SET NULL;
+-- Add FK from users to members once, allowing migrations to be rerun safely
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'fk_users_member'
+    ) THEN
+        ALTER TABLE users
+            ADD CONSTRAINT fk_users_member
+            FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- ============================================================
 -- SAVINGS TRANSACTIONS

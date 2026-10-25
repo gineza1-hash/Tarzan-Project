@@ -18,7 +18,9 @@ async function seed() {
        RETURNING user_id`,
       [adminHash]
     );
-    const adminId = adminResult.rows[0]?.user_id;
+    const adminId = adminResult.rows[0]?.user_id || (
+      await client.query('SELECT user_id FROM users WHERE email = $1', ['admin@tarzan.rw'])
+    ).rows[0]?.user_id;
     console.log('✅ Admin user created — email: admin@tarzan.rw | password: Admin@1234');
 
     // ── Treasurer user ──
@@ -30,14 +32,10 @@ async function seed() {
        RETURNING user_id`,
       [treasurerHash]
     );
-    const treasurerId = treasurerResult.rows[0]?.user_id;
+    const treasurerId = treasurerResult.rows[0]?.user_id || (
+      await client.query('SELECT user_id FROM users WHERE email = $1', ['treasurer@tarzan.rw'])
+    ).rows[0]?.user_id;
     console.log('✅ Treasurer user created — email: treasurer@tarzan.rw | password: Treasurer@1234');
-
-    if (!adminId) {
-      console.log('ℹ️  Admin already exists, skipping member/transaction seed.');
-      await client.query('COMMIT');
-      return;
-    }
 
     // ── Members ──
     const members = [
@@ -52,7 +50,7 @@ async function seed() {
       const res = await client.query(
         `INSERT INTO members (member_number, full_name, phone, email, national_id, created_by)
          VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (member_number) DO NOTHING
+         ON CONFLICT (member_number) DO UPDATE SET full_name = EXCLUDED.full_name
          RETURNING member_id`,
         [m.number, m.name, m.phone, m.email, m.nationalId, adminId]
       );
@@ -96,12 +94,20 @@ async function seed() {
     console.log(`✅ ${savingsData.length} savings transactions created`);
 
     // ── Loan ──
-    const loanResult = await client.query(
-      `INSERT INTO loans (member_id, principal, interest_method, interest_rate, duration_months, due_date, status, approved_by, approved_at, disbursed_at, recorded_by)
-       VALUES ($1, 200000, 'reducing_balance', 2.0, 12, '2027-03-01', 'disbursed', $2, '2026-03-01', '2026-03-05', $2)
-       RETURNING loan_id`,
-      [memberIds[0], adminId]
+    const existingLoan = await client.query(
+      `SELECT loan_id FROM loans
+       WHERE member_id = $1 AND principal = 200000 AND status = 'disbursed'
+       ORDER BY created_at LIMIT 1`,
+      [memberIds[0]]
     );
+    const loanResult = existingLoan.rows[0]
+      ? existingLoan
+      : await client.query(
+        `INSERT INTO loans (member_id, principal, interest_method, interest_rate, duration_months, due_date, status, approved_by, approved_at, disbursed_at, recorded_by)
+         VALUES ($1, 200000, 'reducing_balance', 2.0, 12, '2027-03-01', 'disbursed', $2, '2026-03-01', '2026-03-05', $2)
+         RETURNING loan_id`,
+        [memberIds[0], adminId]
+      );
     const loanId = loanResult.rows[0].loan_id;
     console.log('✅ Sample loan created (RWF 200,000 — disbursed)');
 

@@ -106,7 +106,7 @@ async function getMemberSummary(req, res) {
     const [savingsResult, loansResult] = await Promise.all([
       pool.query(
         `SELECT
-           COALESCE(SUM(CASE WHEN transaction_type = 'deposit' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_deposits,
+           COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'adjustment') AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_deposits,
            COALESCE(SUM(CASE WHEN transaction_type = 'withdrawal' AND is_reversed = FALSE THEN amount ELSE 0 END), 0) AS total_withdrawals
          FROM savings_transactions WHERE member_id = $1`,
         [memberId]
