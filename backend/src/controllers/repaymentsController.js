@@ -6,6 +6,15 @@ const logger = require('../utils/logger');
 async function getLoanRepayments(req, res) {
   const { loanId } = req.params;
   try {
+    const loanResult = await pool.query(
+      'SELECT member_id FROM loans WHERE loan_id = $1',
+      [loanId]
+    );
+    if (loanResult.rows.length === 0) return res.status(404).json({ error: 'Loan not found.' });
+    if (!['admin', 'treasurer'].includes(req.user.role) && loanResult.rows[0].member_id !== req.user.member_id) {
+      return res.status(403).json({ error: 'Access denied. You can only view your own records.' });
+    }
+
     const result = await pool.query(
       `SELECT r.*, u.username AS recorded_by_name
        FROM repayments r
@@ -47,6 +56,10 @@ async function recordRepayment(req, res) {
     if (!['disbursed', 'approved'].includes(loan.status)) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Repayments can only be recorded for active loans.' });
+    }
+    if (loan.member_id !== memberId) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Repayment member does not match the loan member.' });
     }
 
     // Validate components sum to total

@@ -37,6 +37,19 @@ async function recordSavingsTransaction(req, res) {
   try {
     await client.query('BEGIN');
 
+    const memberResult = await client.query(
+      'SELECT member_id, status FROM members WHERE member_id = $1 FOR UPDATE',
+      [memberId]
+    );
+    if (memberResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Member not found.' });
+    }
+    if (memberResult.rows[0].status !== 'active') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Savings transactions can only be recorded for active members.' });
+    }
+
     // Duplicate reference check
     const dupCheck = await client.query(
       'SELECT transaction_id FROM savings_transactions WHERE reference_code = $1',
@@ -95,8 +108,8 @@ async function recordSavingsTransaction(req, res) {
 
     // SMS notification for deposits
     if (transactionType === 'deposit') {
-      const memberResult = await pool.query('SELECT full_name, phone FROM members WHERE member_id = $1', [memberId]);
-      const member = memberResult.rows[0];
+      const notificationResult = await pool.query('SELECT full_name, phone FROM members WHERE member_id = $1', [memberId]);
+      const member = notificationResult.rows[0];
       if (member?.phone) {
         await sendDepositNotification({
           phone: member.phone,

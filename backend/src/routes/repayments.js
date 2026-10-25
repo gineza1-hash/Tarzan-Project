@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const { getLoanRepayments, recordRepayment } = require('../controllers/repaymentsController');
 const { authenticate, authorize, ownDataOnly } = require('../middleware/auth');
+const { validateRequest } = require('../middleware/validation');
 
 const repaymentValidation = [
   body('loanId').isUUID(),
@@ -13,6 +14,6 @@ const repaymentValidation = [
 ];
 
 router.get('/loan/:loanId', authenticate, getLoanRepayments);
-router.post('/', authenticate, authorize('admin', 'treasurer'), repaymentValidation, recordRepayment);
+router.post('/', authenticate, authorize('admin', 'treasurer'), repaymentValidation, validateRequest, recordRepayment);
 
 module.exports = router;

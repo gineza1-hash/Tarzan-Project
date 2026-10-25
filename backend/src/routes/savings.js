@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const { getSavingsTransactions, recordSavingsTransaction, reverseSavingsTransaction } = require('../controllers/savingsController');
 const { authenticate, authorize, ownDataOnly } = require('../middleware/auth');
+const { validateRequest } = require('../middleware/validation');
 
 const savingsValidation = [
   body('memberId').isUUID(),
@@ -11,7 +12,7 @@ const savingsValidation = [
 ];
 
 router.get('/member/:memberId', authenticate, ownDataOnly, getSavingsTransactions);
-router.post('/', authenticate, authorize('admin', 'treasurer'), savingsValidation, recordSavingsTransaction);
+router.post('/', authenticate, authorize('admin', 'treasurer'), savingsValidation, validateRequest, recordSavingsTransaction);
 router.patch('/:transactionId/reverse', authenticate, authorize('admin'), reverseSavingsTransaction);
 
 module.exports = router;

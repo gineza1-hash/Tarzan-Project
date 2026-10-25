@@ -34,6 +34,14 @@ async function createLoan(req, res) {
   const ip = req.ip || req.connection.remoteAddress;
 
   try {
+    const memberResult = await pool.query(
+      'SELECT member_id FROM members WHERE member_id = $1 AND status = $2',
+      [memberId, 'active']
+    );
+    if (memberResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Active member not found.' });
+    }
+
     // Check no active loan exists for this member
     const activeCheck = await pool.query(
       `SELECT loan_id FROM loans WHERE member_id = $1 AND status IN ('approved', 'disbursed')`,
@@ -179,7 +187,10 @@ async function disburseLoan(req, res) {
 async function getLoanSchedule(req, res) {
   const { loanId } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM loans WHERE loan_id = $1', [loanId]);
+    const result = await pool.query(
+      'SELECT * FROM loans WHERE loan_id = $1 AND ($2 = ANY(ARRAY[\'admin\', \'treasurer\']) OR member_id = $3)',
+      [loanId, req.user.role, req.user.member_id]
+    );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Loan not found.' });
 
     const loan = result.rows[0];

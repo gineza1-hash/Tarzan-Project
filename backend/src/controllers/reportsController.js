@@ -10,8 +10,14 @@ async function getDashboardSummary(req, res) {
                   FROM savings_transactions`),
       pool.query(`SELECT COUNT(*) AS total,
                          COUNT(*) FILTER (WHERE status = 'disbursed') AS active,
-                         COALESCE(SUM(principal) FILTER (WHERE status IN ('disbursed', 'approved')), 0) AS total_outstanding_principal
-                  FROM loans`),
+                         COALESCE(SUM(l.principal - COALESCE(r.paid_principal, 0))
+                           FILTER (WHERE l.status IN ('disbursed', 'approved')), 0) AS total_outstanding_principal
+                  FROM loans l
+                  LEFT JOIN (
+                    SELECT loan_id, SUM(principal_component) AS paid_principal
+                    FROM repayments
+                    GROUP BY loan_id
+                  ) r ON r.loan_id = l.loan_id`),
       pool.query(`SELECT COALESCE(SUM(amount), 0) AS total_collected FROM repayments`),
     ]);
 
