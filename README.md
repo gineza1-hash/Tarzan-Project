@@ -57,6 +57,8 @@ cp .env.example .env
 # Fill in DATABASE_URL, JWT_SECRET, AT_API_KEY, AT_USERNAME
 ```
 
+For Supabase, use the connection string from **Dashboard → Connect → Session pooler** (or the transaction pooler for short-lived scripts), rather than the direct `db.<project-ref>.supabase.co:5432` host when your network cannot reach the direct endpoint. Keep `DATABASE_SSL=true`.
+
 ### 3. Run database migration
 
 ```bash
