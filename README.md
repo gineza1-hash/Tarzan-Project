@@ -20,7 +20,7 @@ BSc. Software Engineering | Foundations Project | October 2026
 
 ---
 
-## Project Structure
+## Project's Structure
 
 ```
 Tarzan-Project/
@@ -79,6 +79,57 @@ The seed creates demo admin, treasurer, and member accounts plus savings, loan, 
 npm run dev       # development
 npm start         # production
 ```
+
+### Run backend tests
+
+From `Tarzan-Project/backend`:
+
+```bash
+npm test
+```
+
+The tests cover the health endpoint, authentication boundary, USSD request validation,
+and core savings/loan calculations. Full database workflow tests should be run against
+a disposable PostgreSQL database before production use.
+
+### Database backups and recovery
+
+The backend includes PostgreSQL backup and restore scripts. Install the PostgreSQL
+client tools (`pg_dump` and `pg_restore`), set `DATABASE_URL` in the shell only, and
+never commit it.
+
+On Windows PowerShell:
+
+```powershell
+.\scripts\backup.ps1
+.\scripts\restore.ps1 .\backups\tarzan-YYYYMMDD-HHMMSS.dump
+```
+
+On Linux/macOS:
+
+```bash
+./scripts/backup.sh
+./scripts/restore.sh ./backups/tarzan-YYYYMMDD-HHMMSS.dump
+```
+
+Restore only into a test database first. A recovery test is complete when the schema,
+users, members, transactions, loans, repayments, and audit records are present after
+the restore and `/health` responds successfully.
+
+### Deploy to Render
+
+The repository includes [render.yaml](./render.yaml) and a production [Dockerfile](./backend/Dockerfile).
+In Render, choose **New → Blueprint**, select this repository, and confirm the blueprint.
+Set the secret environment variables shown as `sync: false`, then deploy. Render's
+health check uses `/health`. Run the migration and seed commands against the Supabase
+database before testing the deployed API:
+
+```bash
+npm run migrate
+npm run seed
+```
+
+Do not use the demo seed passwords outside a test environment.
 
 ---
 
