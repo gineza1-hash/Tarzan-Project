@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reports · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content wide">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1>Reports</h1>
+        <p>Savings activity across all members, and a record of who did what.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Reports">
+        <button type="button" class="tab" role="tab" id="tab-transactions" aria-selected="true" aria-controls="panel-transactions">Savings transactions</button>
+        <button type="button" class="tab" role="tab" id="tab-audit" aria-selected="false" aria-controls="panel-audit" tabindex="-1" hidden>Audit log</button>
+      </div>
+
+      <!-- Savings transactions (admin, treasurer) -->
+      <section id="panel-transactions" role="tabpanel" aria-labelledby="tab-transactions">
+        <div class="filters">
+          <div>
+            <label for="tx-from">From</label>
+            <input id="tx-from" type="date">
+          </div>
+          <div>
+            <label for="tx-to">To</label>
+            <input id="tx-to" type="date">
+          </div>
+          <div>
+            <label for="tx-type">Type</label>
+            <select id="tx-type">
+              <option value="">All types</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+              <option value="adjustment">Adjustment</option>
+            </select>
+          </div>
+          <div>
+            <label for="tx-member">Member</label>
+            <select id="tx-member">
+              <option value="">All members</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-quiet btn-small" id="tx-clear">Clear filters</button>
+          <button type="button" class="btn btn-secondary push-right" id="tx-export" disabled>Download CSV</button>
+        </div>
+
+        <div id="tx-summary"></div>
+        <div id="tx-list"></div>
+      </section>
+
+      <!-- Audit log (admin only) -->
+      <section id="panel-audit" role="tabpanel" aria-labelledby="tab-audit" hidden>
+        <div class="filters">
+          <div>
+            <label for="au-from">From</label>
+            <input id="au-from" type="date">
+          </div>
+          <div>
+            <label for="au-to">To</label>
+            <input id="au-to" type="date">
+          </div>
+          <div>
+            <label for="au-action">Action</label>
+            <select id="au-action"></select>
+          </div>
+          <div>
+            <label for="au-entity">Record type</label>
+            <select id="au-entity"></select>
+          </div>
+          <button type="button" class="btn btn-quiet btn-small" id="au-clear">Clear filters</button>
+        </div>
+
+        <div id="au-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/reports.js"></script>
+</body>
+</html>

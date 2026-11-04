@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="auth">
+    <section class="auth-aside" aria-hidden="true">
+      <h1>Tarzan SACCO Ledger</h1>
+      <p>Savings, loans and repayments, recorded once and traceable.</p>
+    </section>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <h2>Sign in</h2>
+        <p class="intro">Use the email address your administrator registered for you.</p>
+
+        <div id="login-error" class="alert alert-error" role="alert" hidden></div>
+
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="show-password"> Show password
+          </label>
+          <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

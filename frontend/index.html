@@ -1,13 +1,16 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tarzan SACCO Ledger</title>
+</head>
+<body>
+  <p>Loading…</p>
+  <script src="js/auth.js"></script>
+  <script>
+    const user = getUser();
+    window.location.replace(getToken() && user ? homeFor(user.role) : 'login.html');
+  </script>
+</body>
 </html>
