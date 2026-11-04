@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+
 : "${DATABASE_URL:?DATABASE_URL is not set}"
 output_directory="${1:-./backups}"
 mkdir -p "$output_directory"
