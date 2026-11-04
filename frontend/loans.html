@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loans · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1 id="page-title">Loans</h1>
+        <p id="page-intro">Applications, approvals and repayment progress for each member.</p>
+      </header>
+
+      <div id="notice" class="alert alert-success" role="status" hidden></div>
+
+      <!-- Staff only: choose whose loans to view -->
+      <div class="picker" id="picker" hidden>
+        <label for="member-select">Member</label>
+        <select id="member-select"></select>
+      </div>
+      <p class="state" id="pick-hint" hidden>Choose a member to see their loans.</p>
+
+      <div id="member-area" hidden>
+        <div class="filters">
+          <button type="button" class="btn btn-primary push-right" id="new-btn" hidden>New loan</button>
+        </div>
+        <p class="hint-line" id="new-hint" hidden></p>
+
+        <div id="loans"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New loan (staff) -->
+  <dialog id="loan-dialog" aria-labelledby="loan-title">
+    <form id="loan-form" novalidate>
+      <h2 id="loan-title">New loan</h2>
+      <p class="dialog-context" id="loan-for"></p>
+
+      <div id="loan-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-principal">Amount borrowed (RWF)</label>
+          <input id="f-principal" type="text" inputmode="decimal" autocomplete="off" placeholder="200000">
+        </div>
+        <div class="field">
+          <label for="f-method">Interest method</label>
+          <select id="f-method">
+            <option value="reducing_balance">Reducing balance</option>
+            <option value="flat">Flat rate</option>
+            <option value="simple">Simple interest</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-rate">Interest rate (%)</label>
+          <input id="f-rate" type="text" inputmode="decimal" autocomplete="off" placeholder="18">
+          <p class="hint" id="rate-hint"></p>
+        </div>
+        <div class="field">
+          <label for="f-months">Duration (months)</label>
+          <input id="f-months" type="text" inputmode="numeric" autocomplete="off" placeholder="12">
+        </div>
+        <div class="field">
+          <label for="f-due">Due date</label>
+          <input id="f-due" type="date">
+          <p class="hint">Filled in from the duration. It appears on the loan and in the approval SMS.</p>
+        </div>
+        <div class="field full">
+          <label for="f-notes">Notes (optional)</label>
+          <textarea id="f-notes" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="loan-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="loan-submit">Create loan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Approve / disburse confirmation -->
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title">
+    <form id="confirm-form" novalidate>
+      <h2 id="confirm-title"></h2>
+      <p class="dialog-context" id="confirm-text"></p>
+
+      <div id="confirm-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="confirm-submit"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Loan details -->
+  <dialog id="detail-dialog" class="dialog-wide" aria-labelledby="detail-title">
+    <h2 id="detail-title">Loan details</h2>
+    <div id="detail-body"></div>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="detail-close">Close</button>
+    </div>
+  </dialog>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/loans.js"></script>
+</body>
+</html>

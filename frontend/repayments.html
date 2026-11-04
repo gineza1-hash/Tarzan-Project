@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repayments · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1 id="page-title">Repayments</h1>
+        <p id="page-intro">Payments received against each loan.</p>
+      </header>
+
+      <div id="notice" class="alert alert-success" role="status" hidden></div>
+
+      <!-- Staff only: choose whose loans to look at -->
+      <div class="picker" id="picker" hidden>
+        <label for="member-select">Member</label>
+        <select id="member-select"></select>
+      </div>
+      <p class="state" id="pick-hint" hidden>Choose a member to see their repayments.</p>
+
+      <div id="member-area" hidden>
+        <p class="state" id="no-loans" hidden>No approved loans yet, so there are no repayments to show.</p>
+
+        <div id="loan-area" hidden>
+          <div class="picker">
+            <label for="loan-select">Loan</label>
+            <select id="loan-select"></select>
+          </div>
+
+          <div id="summary"></div>
+
+          <div class="filters">
+            <button type="button" class="btn btn-primary push-right" id="record-btn" hidden>Record repayment</button>
+          </div>
+          <p class="hint-line" id="record-hint" hidden></p>
+
+          <div id="repayments"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Record a repayment (staff) -->
+  <dialog id="record-dialog" aria-labelledby="record-title">
+    <form id="record-form" novalidate>
+      <h2 id="record-title">Record repayment</h2>
+      <p class="dialog-context" id="record-for"></p>
+
+      <div id="record-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-principal">Towards the loan (RWF)</label>
+          <input id="f-principal" type="text" inputmode="decimal" autocomplete="off" placeholder="14667">
+          <p class="hint">The part that reduces what the member borrowed.</p>
+        </div>
+        <div class="field">
+          <label for="f-interest">Interest (RWF)</label>
+          <input id="f-interest" type="text" inputmode="decimal" autocomplete="off" placeholder="3333">
+        </div>
+        <div class="field">
+          <label for="f-fees">Fees (optional, RWF)</label>
+          <input id="f-fees" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="f-date">Date paid</label>
+          <input id="f-date" type="date">
+        </div>
+        <div class="total-line full">
+          <span>Total received</span>
+          <strong id="total-received" class="num">RWF 0</strong>
+        </div>
+        <div class="field">
+          <label for="f-ref">Reference</label>
+          <input id="f-ref" type="text" autocomplete="off" maxlength="50">
+          <p class="hint">A receipt or mobile money code. Each reference can be used once.</p>
+        </div>
+        <div class="field">
+          <label for="f-notes">Notes (optional)</label>
+          <textarea id="f-notes" rows="2"></textarea>
+        </div>
+      </div>
+      <p class="hint">The member is sent an SMS with the amount and what they still owe. The loan closes by itself once the full amount borrowed is repaid.</p>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="record-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="record-submit">Record repayment</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/repayments.js"></script>
+</body>
+</html>

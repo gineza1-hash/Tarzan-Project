@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Members · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1>Members</h1>
+        <p>Everyone registered with the SACCO.</p>
+      </header>
+
+      <div id="notice" class="alert alert-success" role="status" hidden></div>
+
+      <div class="toolbar">
+        <div class="search">
+          <label class="visually-hidden" for="search">Search members</label>
+          <input id="search" type="search" placeholder="Search by name, number, phone or email">
+        </div>
+        <label class="visually-hidden" for="status-filter">Filter by status</label>
+        <select id="status-filter">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button type="button" class="btn btn-primary" id="add-btn">Add member</button>
+      </div>
+
+      <div id="members"></div>
+    </main>
+  </div>
+
+  <dialog id="member-dialog" aria-labelledby="dialog-title">
+    <form id="member-form" novalidate>
+      <h2 id="dialog-title">Add member</h2>
+
+      <div id="form-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-number">Member number</label>
+          <input id="f-number" type="text" placeholder="e.g. RW-005">
+        </div>
+        <div class="field">
+          <label for="f-name">Full name</label>
+          <input id="f-name" type="text" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone (optional)</label>
+          <input id="f-phone" type="tel" placeholder="+250788000005">
+          <p class="hint">Include the country code. This number receives SMS alerts and unlocks USSD.</p>
+        </div>
+        <div class="field">
+          <label for="f-email">Email (optional)</label>
+          <input id="f-email" type="email" autocomplete="off">
+        </div>
+        <div class="field" id="wrap-national">
+          <label for="f-national">National ID (optional)</label>
+          <input id="f-national" type="text" autocomplete="off">
+        </div>
+        <div class="field" id="wrap-joined">
+          <label for="f-joined">Date joined</label>
+          <input id="f-joined" type="date">
+        </div>
+        <div class="field" id="wrap-status" hidden>
+          <label for="f-status">Status</label>
+          <select id="f-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Add member</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/members.js"></script>
+</body>
+</html>

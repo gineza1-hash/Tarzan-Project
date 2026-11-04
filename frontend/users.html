@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1>Users</h1>
+        <p>Login accounts for members, treasurers and admins.</p>
+      </header>
+
+      <div class="filters">
+        <label class="check filter-check">
+          <input type="checkbox" id="only-missing"> Only members without a login
+        </label>
+        <button type="button" class="btn btn-primary push-right" id="new-btn">New account</button>
+      </div>
+      <p class="hint">Staff accounts that are not linked to a member do not appear in this list, because the backend cannot list them.</p>
+
+      <div id="members" class="members-box"></div>
+    </main>
+  </div>
+
+  <dialog id="user-dialog" aria-labelledby="user-title">
+    <!-- Step 1: the form -->
+    <form id="user-form" novalidate>
+      <h2 id="user-title">New account</h2>
+
+      <div id="user-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-role">Role</label>
+          <select id="f-role">
+            <option value="member">Member</option>
+            <option value="treasurer">Treasurer</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-member">Member record</label>
+          <select id="f-member"></select>
+        </div>
+        <p class="hint full" id="role-hint"></p>
+        <div class="field">
+          <label for="f-username">Username</label>
+          <input id="f-username" type="text" autocomplete="off" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="f-email">Email (used to sign in)</label>
+          <input id="f-email" type="email" autocomplete="off" maxlength="100">
+        </div>
+        <div class="field full">
+          <label for="f-password">Password</label>
+          <div class="password-row">
+            <input id="f-password" type="password" autocomplete="new-password">
+            <button type="button" class="btn btn-secondary" id="generate-btn">Generate</button>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="show-password"> Show password
+          </label>
+          <p class="hint">At least 8 characters.</p>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Create account</button>
+      </div>
+    </form>
+
+    <!-- Step 2: shown once after the account is created -->
+    <div id="done-view" hidden>
+      <h2>Account created</h2>
+      <p class="dialog-context">Share these details privately. The password is not shown again.</p>
+      <section class="statement" id="done-details"></section>
+      <p class="hint" id="copy-status" role="status"></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="copy-btn">Copy password</button>
+        <button type="button" class="btn btn-primary" id="done-btn">Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/users.js"></script>
+</body>
+</html>

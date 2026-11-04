@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Savings · Tarzan SACCO Ledger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="content">
+      <div id="banner"></div>
+      <header class="page-head">
+        <h1 id="page-title">Savings</h1>
+        <p id="page-intro">Deposits, withdrawals and adjustments for each member.</p>
+      </header>
+
+      <div id="notice" class="alert alert-success" role="status" hidden></div>
+
+      <!-- Staff only: choose whose savings to view -->
+      <div class="picker" id="picker" hidden>
+        <label for="member-select">Member</label>
+        <select id="member-select"></select>
+      </div>
+      <p class="state" id="pick-hint" hidden>Choose a member to see their savings.</p>
+
+      <div id="member-area" hidden>
+        <div id="summary"></div>
+
+        <div class="filters">
+          <div>
+            <label for="filter-from">From</label>
+            <input id="filter-from" type="date">
+          </div>
+          <div>
+            <label for="filter-to">To</label>
+            <input id="filter-to" type="date">
+          </div>
+          <div>
+            <label for="filter-type">Type</label>
+            <select id="filter-type">
+              <option value="">All types</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdrawal">Withdrawal</option>
+              <option value="adjustment">Adjustment</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-quiet btn-small" id="clear-filters">Clear filters</button>
+          <button type="button" class="btn btn-primary push-right" id="record-btn" hidden>Record transaction</button>
+        </div>
+        <p class="hint-line" id="record-hint" hidden>This member is inactive, so new transactions cannot be recorded.</p>
+
+        <div id="transactions"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Record a transaction (staff) -->
+  <dialog id="record-dialog" aria-labelledby="record-title">
+    <form id="record-form" novalidate>
+      <h2 id="record-title">Record transaction</h2>
+      <p class="dialog-context" id="record-for"></p>
+
+      <div id="record-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-type">Type</label>
+          <select id="f-type">
+            <option value="deposit">Deposit</option>
+            <option value="withdrawal">Withdrawal</option>
+            <option value="adjustment">Adjustment</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-amount">Amount (RWF)</label>
+          <input id="f-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="50000">
+        </div>
+        <p class="hint full">Deposits and adjustments add to the balance; withdrawals subtract. Deposits also send the member an SMS.</p>
+        <div class="field">
+          <label for="f-ref">Reference</label>
+          <input id="f-ref" type="text" autocomplete="off" maxlength="50">
+          <p class="hint">A receipt or mobile money code. Each reference can be used once.</p>
+        </div>
+        <div class="field">
+          <label for="f-date">Date</label>
+          <input id="f-date" type="date">
+        </div>
+        <div class="field full">
+          <label for="f-notes">Notes (optional)</label>
+          <textarea id="f-notes" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="record-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="record-submit">Record transaction</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Reverse a transaction (admin) -->
+  <dialog id="reverse-dialog" aria-labelledby="reverse-title">
+    <form id="reverse-form" novalidate>
+      <h2 id="reverse-title">Reverse transaction</h2>
+      <p class="dialog-context" id="reverse-text"></p>
+
+      <div id="reverse-error" class="alert alert-error" role="alert" hidden></div>
+
+      <div class="field">
+        <label for="f-reason">Reason</label>
+        <textarea id="f-reason" rows="3"></textarea>
+        <p class="hint">The transaction stays in the history, marked as reversed, and the balance is recalculated without it.</p>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="reverse-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="reverse-submit">Reverse transaction</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/savings.js"></script>
+</body>
+</html>
