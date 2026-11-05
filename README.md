@@ -250,3 +250,5 @@ Triggered automatically on:
 | SONIA KEZA GENDANEZA | Testing & documentation |
 | ELSIE GLENNA INEZA | Scrum Master |
 | IbBYISHAKA REMY | Full stack|
+
+Trello Link: https://trello.com/b/gNkH9DO9/tarzan-project
