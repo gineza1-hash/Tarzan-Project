@@ -249,3 +249,4 @@ Triggered automatically on:
 | MANZI MULINDA DIVIN ELVIS | Backend & database |
 | SONIA KEZA GENDANEZA | Testing & documentation |
 | ELSIE GLENNA INEZA | Scrum Master |
+| IbBYISHAKA REMY | Full stack|
