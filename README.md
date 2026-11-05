@@ -252,3 +252,4 @@ Triggered automatically on:
 | IbBYISHAKA REMY | Full stack|
 
 Trello Link: https://trello.com/b/gNkH9DO9/tarzan-project
+Figma Design Link: https://www.figma.com/design/wbjYQRHb0nia6yK3x1GI57/Tarzan-Figma-Design?node-id=0-1&t=eCieMmIr2e4lI3DF-1
