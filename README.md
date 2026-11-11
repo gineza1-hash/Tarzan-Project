@@ -54,10 +54,52 @@ npm install
 
 ```bash
 cp .env.example .env
-# Fill in DATABASE_URL, JWT_SECRET, AT_API_KEY, AT_USERNAME
+# Fill in DATABASE_URL, JWT_SECRET, AT_API_KEY, and AT_USERNAME
 ```
 
 For Supabase, use the connection string from **Dashboard → Connect → Session pooler** (or the transaction pooler for short-lived scripts), rather than the direct `db.<project-ref>.supabase.co:5432` host when your network cannot reach the direct endpoint. Keep `DATABASE_SSL=true`.
+
+### Configure Africa's Talking USSD
+
+1. Create or open an Africa's Talking account and select the Rwanda application/environment.
+2. Set `AT_USERNAME` to the application username and `AT_API_KEY` to its API key. Use `sandbox` as the username while testing in the sandbox.
+3. In the Africa's Talking USSD channel settings, create a USSD code and set its callback URL to the deployed URL followed by `/ussd`, for example:
+   `https://tarzan-sacco-api.onrender.com/ussd`
+4. Set the same code in `AT_USSD_CODE`. The callback must be reachable over HTTPS; no trailing slash is required.
+5. Ensure every member's phone is stored with the Rwanda country code (for example `+250788000001`). The callback accepts Africa's Talking's international format and ignores spaces, `+`, and other punctuation when matching.
+
+Africa's Talking sends `sessionId`, `serviceCode`, `phoneNumber`, and `text` as `application/x-www-form-urlencoded`. The API returns the required plain-text `CON` or `END` response.
+
+For sandbox testing only, set `USSD_DEMO_DEPOSITS=true` in the deployment environment. This adds option `5`, records a clearly labeled demo deposit, and sends an SMS if Africa's Talking SMS is configured. It does not process mobile-money payments and must remain disabled for production.
+
+The USSD menu also supports:
+
+```text
+6. Request Withdrawal
+7. Apply for Loan
+```
+
+Withdrawals are requests, not automatic payouts. The default daily limit is RWF 50,000, configurable with `USSD_DAILY_WITHDRAWAL_LIMIT_RWF`. Staff review requests through `/api/withdrawals`, and only an approved request can be marked completed and recorded as a withdrawal. This prevents the system from claiming that mobile-money funds were sent before MTN/Airtel payout integration is approved.
+
+Loan applications collect the requested amount, repayment period, and purpose. They enter `pending` status for administrator review. Administrators can approve with `PATCH /api/loans/:loanId/approve` or reject with `PATCH /api/loans/:loanId/reject` and a reason; the member receives an SMS when the decision is made.
+
+### Member account lifecycle
+
+Member records are never deleted when someone leaves or needs to be blocked. An administrator can edit a member and set the status to **Inactive**, providing a reason. This preserves savings, loan, repayment, and audit history while preventing the member from logging in, using USSD, or using an existing session. Reactivating the member restores access without changing financial records.
+
+The database migration adds deactivation metadata and a normalized unique phone index. Before applying it to an existing production database, check for duplicate phone numbers:
+
+```sql
+SELECT regexp_replace(phone, '[^0-9]', '', 'g') AS normalized_phone, COUNT(*)
+FROM members
+WHERE phone IS NOT NULL
+GROUP BY normalized_phone
+HAVING COUNT(*) > 1;
+```
+
+Resolve any duplicates before running `npm run migrate`. The migration is otherwise safe to rerun.
+
+For a live deployment, keep `USSD_DEMO_DEPOSITS=false`, use production payment credentials only after provider approval, keep `DATABASE_URL` and `JWT_SECRET` in Render environment variables, and verify database backups before onboarding real members.
 
 ### 3. Run database migration
 

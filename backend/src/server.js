@@ -12,8 +12,11 @@ const loansRoutes      = require('./routes/loans');
 const repaymentsRoutes = require('./routes/repayments');
 const reportsRoutes    = require('./routes/reports');
 const ussdRoutes       = require('./routes/ussd');
+const withdrawalRoutes = require('./routes/withdrawals');
+const PORT = process.env.PORT || 5000;
 
-const app = express();
+function createApp() {
+  const app = express();
 
 // Security headers
 app.use(helmet());
@@ -53,6 +56,7 @@ app.use('/api/loans',      loansRoutes);
 app.use('/api/repayments', repaymentsRoutes);
 app.use('/api/reports',    reportsRoutes);
 app.use('/ussd',           ussdRoutes); // Africa's Talking callback — no /api prefix
+app.use('/api/withdrawals', withdrawalRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: 'Route not found.' }));
@@ -63,9 +67,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error.' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  logger.info(`🚀 Tarzan SACCO API running on port ${PORT} [${process.env.NODE_ENV}]`);
-});
+  return app;
+}
 
-module.exports = app;
+const app = createApp();
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    logger.info(`Tarzan SACCO API running on port ${PORT} [${process.env.NODE_ENV}]`);
+  });
+}
+
+module.exports = { app, createApp };

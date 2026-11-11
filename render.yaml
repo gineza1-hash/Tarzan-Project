@@ -25,3 +25,7 @@ services:
         sync: false
       - key: AT_USSD_CODE
         sync: false
+      - key: USSD_DEMO_DEPOSITS
+        value: "false"
+      - key: USSD_DAILY_WITHDRAWAL_LIMIT_RWF
+        value: "50000"

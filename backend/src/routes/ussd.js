@@ -6,13 +6,14 @@ const logger = require('../utils/logger');
 router.post('/', async (req, res) => {
   const { sessionId, serviceCode, phoneNumber, text } = req.body;
 
-  if (!sessionId || !phoneNumber) {
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+
+  if (!sessionId || !serviceCode || !phoneNumber || (text !== undefined && typeof text !== 'string')) {
     return res.status(400).send('END Invalid request.');
   }
 
   try {
     const response = await handleUSSD({ sessionId, serviceCode, phoneNumber, text: text || '' });
-    res.set('Content-Type', 'text/plain');
     return res.send(response);
   } catch (err) {
     logger.error('USSD handler error', { error: err.message });

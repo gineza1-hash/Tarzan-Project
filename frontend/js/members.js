@@ -200,7 +200,7 @@
     statusSelect.value = member.status;
     nationalWrap.hidden = true;
     joinedWrap.hidden = true;
-    statusWrap.hidden = false;
+    statusWrap.hidden = user.role !== 'admin';
 
     dialog.showModal();
     nameInput.focus();
@@ -247,7 +247,7 @@
         showFormError('Enter a full name of at least 2 characters.');
         return;
       }
-      body = { fullName, status: statusSelect.value };
+      body = { fullName };
       if (phone) body.phone = phone;
       if (email) body.email = email;
     }
@@ -262,6 +262,20 @@
         showNotice('Member added.');
       } else {
         await api.patch(`/members/${encodeURIComponent(editingId)}`, body);
+        const selectedStatus = statusSelect.value;
+        const currentMember = members.find((member) => member.member_id === editingId);
+        if (user.role === 'admin' && selectedStatus !== currentMember.status) {
+          const reason = selectedStatus === 'inactive'
+            ? window.prompt('Reason for deactivating this member:')?.trim()
+            : 'Member reactivated';
+          if (selectedStatus === 'inactive' && (!reason || reason.length < 3)) {
+            throw new Error('A reason of at least 3 characters is required to deactivate a member.');
+          }
+          await api.patch(`/members/${encodeURIComponent(editingId)}/status`, {
+            status: selectedStatus,
+            reason,
+          });
+        }
         showNotice('Changes saved.');
       }
       closeDialog();

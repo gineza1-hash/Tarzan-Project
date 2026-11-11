@@ -2,6 +2,10 @@ const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
 const logger = require('../utils/logger');
 
+function validateMemberStatus(status) {
+  return status === undefined || status === 'active' || status === 'inactive';
+}
+
 async function getAllMembers(req, res) {
   try {
     const result = await pool.query(
@@ -69,7 +73,7 @@ async function createMember(req, res) {
 
 async function updateMember(req, res) {
   const { memberId } = req.params;
-  const { fullName, phone, email, status } = req.body;
+  const { fullName, phone, email } = req.body;
   const ip = req.ip || req.connection.remoteAddress;
 
   try {
@@ -78,9 +82,9 @@ async function updateMember(req, res) {
 
     const result = await pool.query(
       `UPDATE members SET full_name = COALESCE($1, full_name), phone = COALESCE($2, phone),
-       email = COALESCE($3, email), status = COALESCE($4, status), updated_at = NOW()
-       WHERE member_id = $5 RETURNING *`,
-      [fullName, phone, email, status, memberId]
+       email = COALESCE($3, email), updated_at = NOW()
+       WHERE member_id = $4 RETURNING *`,
+      [fullName, phone, email, memberId]
     );
 
     await writeAuditLog({
@@ -96,6 +100,52 @@ async function updateMember(req, res) {
     return res.json({ member: result.rows[0] });
   } catch (err) {
     logger.error('Update member error', { error: err.message });
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+}
+
+async function updateMemberStatus(req, res) {
+  const { memberId } = req.params;
+  const { status, reason } = req.body;
+  const ip = req.ip || req.connection.remoteAddress;
+
+  if (!validateMemberStatus(status) || !status) {
+    return res.status(400).json({ error: 'Status must be active or inactive.' });
+  }
+  if (status === 'inactive' && (!reason || reason.trim().length < 3)) {
+    return res.status(400).json({ error: 'A reason is required when deactivating a member.' });
+  }
+
+  try {
+    const before = await pool.query('SELECT * FROM members WHERE member_id = $1', [memberId]);
+    if (before.rows.length === 0) return res.status(404).json({ error: 'Member not found.' });
+
+    const result = await pool.query(
+      `UPDATE members
+       SET status = $1,
+           deactivated_at = CASE WHEN $1 = 'inactive' THEN NOW() ELSE NULL END,
+           deactivated_by = CASE WHEN $1 = 'inactive' THEN $2 ELSE NULL END,
+           deactivation_reason = CASE WHEN $1 = 'inactive' THEN $3 ELSE NULL END,
+           updated_at = NOW()
+       WHERE member_id = $4
+       RETURNING *`,
+      [status, req.user.user_id, status === 'inactive' ? reason.trim() : null, memberId]
+    );
+
+    await writeAuditLog({
+      userId: req.user.user_id,
+      action: status === 'inactive' ? 'DEACTIVATE_MEMBER' : 'REACTIVATE_MEMBER',
+      entityType: 'members',
+      entityId: memberId,
+      ipAddress: ip,
+      beforeState: before.rows[0],
+      afterState: result.rows[0],
+      reason: status === 'inactive' ? reason.trim() : 'Member reactivated',
+    });
+
+    return res.json({ member: result.rows[0] });
+  } catch (err) {
+    logger.error('Update member status error', { error: err.message });
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }
@@ -144,4 +194,12 @@ async function getMemberSummary(req, res) {
   }
 }
 
-module.exports = { getAllMembers, getMemberById, createMember, updateMember, getMemberSummary };
+module.exports = {
+  getAllMembers,
+  getMemberById,
+  createMember,
+  updateMember,
+  updateMemberStatus,
+  getMemberSummary,
+  validateMemberStatus,
+};
