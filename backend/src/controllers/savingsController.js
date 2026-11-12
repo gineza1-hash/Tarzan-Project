@@ -2,6 +2,7 @@ const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
 const { sendDepositNotification } = require('../services/smsService');
 const logger = require('../utils/logger');
+const DAILY_WITHDRAWAL_LIMIT = Number(process.env.USSD_DAILY_WITHDRAWAL_LIMIT_RWF || 50000);
 
 async function getSavingsTransactions(req, res) {
   const { memberId } = req.params;
@@ -62,6 +63,22 @@ async function recordSavingsTransaction(req, res) {
 
     // For withdrawals, check sufficient balance
     if (transactionType === 'withdrawal') {
+      const dailyResult = await client.query(
+        `SELECT COALESCE(SUM(amount), 0) AS withdrawn
+         FROM savings_transactions
+         WHERE member_id = $1
+           AND transaction_type = 'withdrawal'
+           AND is_reversed = FALSE
+           AND transaction_date = CURRENT_DATE`,
+        [memberId]
+      );
+      if (Number(dailyResult.rows[0].withdrawn) + Number(amount) > DAILY_WITHDRAWAL_LIMIT) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          error: `Daily withdrawal limit is RWF ${DAILY_WITHDRAWAL_LIMIT.toLocaleString('en-RW')}.`,
+        });
+      }
+
       const balResult = await client.query(
         `SELECT
            COALESCE(SUM(CASE WHEN transaction_type IN ('deposit', 'adjustment') AND is_reversed = FALSE THEN amount ELSE 0 END), 0) -

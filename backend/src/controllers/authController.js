@@ -16,7 +16,11 @@ async function login(req, res) {
 
   try {
     const result = await pool.query(
-      'SELECT user_id, username, email, password_hash, role, member_id, is_active, last_login_ip FROM users WHERE email = $1',
+      `SELECT u.user_id, u.username, u.email, u.password_hash, u.role, u.member_id,
+              u.is_active, u.last_login_ip, m.status AS member_status
+       FROM users u
+       LEFT JOIN members m ON m.member_id = u.member_id
+       WHERE u.email = $1`,
       [email]
     );
 
@@ -27,7 +31,7 @@ async function login(req, res) {
 
     const user = result.rows[0];
 
-    if (!user.is_active) {
+    if (!user.is_active || user.member_status === 'inactive') {
       return res.status(403).json({ error: 'Account is deactivated. Contact your administrator.' });
     }
 

@@ -11,10 +11,18 @@ async function authenticate(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const result = await pool.query(
-      'SELECT user_id, username, email, role, member_id, is_active FROM users WHERE user_id = $1',
+      `SELECT u.user_id, u.username, u.email, u.role, u.member_id, u.is_active,
+              m.status AS member_status
+       FROM users u
+       LEFT JOIN members m ON m.member_id = u.member_id
+       WHERE u.user_id = $1`,
       [decoded.userId]
     );
-    if (result.rows.length === 0 || !result.rows[0].is_active) {
+    if (
+      result.rows.length === 0 ||
+      !result.rows[0].is_active ||
+      result.rows[0].member_status === 'inactive'
+    ) {
       return res.status(401).json({ error: 'Account not found or deactivated.' });
     }
     req.user = result.rows[0];

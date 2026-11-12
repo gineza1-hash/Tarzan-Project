@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS members (
     national_id   VARCHAR(30) UNIQUE,
     joined_at     DATE NOT NULL DEFAULT CURRENT_DATE,
     status        VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    deactivated_at TIMESTAMPTZ,
+    deactivated_by UUID REFERENCES users(user_id),
+    deactivation_reason TEXT,
     created_by    UUID REFERENCES users(user_id),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -50,6 +53,11 @@ BEGIN
             FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE SET NULL;
     END IF;
 END $$;
+
+ALTER TABLE members
+    ADD COLUMN IF NOT EXISTS deactivated_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS deactivated_by UUID REFERENCES users(user_id),
+    ADD COLUMN IF NOT EXISTS deactivation_reason TEXT;
 
 -- ============================================================
 -- SAVINGS TRANSACTIONS
@@ -83,7 +91,7 @@ CREATE TABLE IF NOT EXISTS loans (
     approved_at     DATE,
     disbursed_at    DATE,
     due_date        DATE,
-    status          VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'disbursed', 'closed', 'defaulted')),
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'disbursed', 'closed', 'defaulted', 'rejected')),
     approved_by     UUID REFERENCES users(user_id),
     recorded_by     UUID NOT NULL REFERENCES users(user_id),
     notes           TEXT,
@@ -108,6 +116,38 @@ CREATE TABLE IF NOT EXISTS repayments (
     notes               TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ============================================================
+-- WITHDRAWAL REQUESTS (member requests, staff approves/pays)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS withdrawal_requests (
+    request_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    member_id        UUID NOT NULL REFERENCES members(member_id) ON DELETE RESTRICT,
+    amount           DECIMAL(15, 2) NOT NULL CHECK (amount > 0),
+    status           VARCHAR(20) NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending', 'approved', 'rejected', 'completed')),
+    requested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    reviewed_at      TIMESTAMPTZ,
+    reviewed_by      UUID REFERENCES users(user_id),
+    completed_at     TIMESTAMPTZ,
+    rejection_reason TEXT,
+    notes            TEXT
+);
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'loans'::regclass AND conname = 'loans_status_check'
+    ) THEN
+        ALTER TABLE loans DROP CONSTRAINT loans_status_check;
+    END IF;
+    ALTER TABLE loans
+        ADD CONSTRAINT loans_status_check
+        CHECK (status IN ('pending', 'approved', 'disbursed', 'closed', 'defaulted', 'rejected'));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================
 -- AUDIT LOGS
@@ -152,3 +192,8 @@ CREATE INDEX IF NOT EXISTS idx_repayments_member  ON repayments(member_id);
 CREATE INDEX IF NOT EXISTS idx_audit_entity       ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_user         ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_login_attempts_user ON login_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_member ON withdrawal_requests(member_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawal_requests_status ON withdrawal_requests(status);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_members_phone_normalized
+    ON members (regexp_replace(phone, '[^0-9]', '', 'g'))
+    WHERE phone IS NOT NULL;

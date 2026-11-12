@@ -93,10 +93,29 @@ async function sendLoanApprovalNotification({ phone, fullName, principal, dueDat
   return sendSMS(phone, message);
 }
 
+async function sendLoanRejectionNotification({ phone, fullName, reason }) {
+  const message =
+    `[TARZAN SACCO] Loan Application Update\n` +
+    `Dear ${fullName}, your loan application was not approved.` +
+    (reason ? `\nReason: ${reason}` : '') +
+    `\nPlease contact your SACCO administrator.`;
+  return sendSMS(phone, message);
+}
+
+async function sendWithdrawalNotification({ phone, fullName, amount, status, reason }) {
+  const message =
+    `[TARZAN SACCO] Withdrawal Request\n` +
+    `Dear ${fullName}, your withdrawal request of RWF ${Number(amount).toLocaleString()} is ${status}.` +
+    (reason ? `\nReason: ${reason}` : '');
+  return sendSMS(phone, message);
+}
+
 module.exports = {
   sendSMS,
   sendSuspiciousLoginAlert,
   sendDepositNotification,
   sendRepaymentNotification,
   sendLoanApprovalNotification,
+  sendLoanRejectionNotification,
+  sendWithdrawalNotification,
 };

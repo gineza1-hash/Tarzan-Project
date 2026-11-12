@@ -1,6 +1,6 @@
 const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
-const { sendLoanApprovalNotification } = require('../services/smsService');
+const { sendLoanApprovalNotification, sendLoanRejectionNotification } = require('../services/smsService');
 const { calculateInterest, calculateMonthlyInstallment } = require('../services/calculationService');
 const logger = require('../utils/logger');
 
@@ -136,6 +136,67 @@ async function approveLoan(req, res) {
   }
 }
 
+async function rejectLoan(req, res) {
+      const { loanId } = req.params;
+      const { reason } = req.body;
+      const ip = req.ip || req.connection.remoteAddress;
+      if (!reason || reason.trim().length < 3) {
+        return res.status(400).json({ error: 'A reason is required when rejecting a loan.' });
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const loanResult = await client.query(
+          `SELECT l.*, m.full_name, m.phone
+           FROM loans l JOIN members m ON m.member_id = l.member_id
+           WHERE l.loan_id = $1 FOR UPDATE`,
+          [loanId]
+        );
+        if (loanResult.rows.length === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'Loan not found.' });
+        }
+        const loan = loanResult.rows[0];
+        if (loan.status !== 'pending') {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: 'Only pending loans can be rejected.' });
+        }
+        const result = await client.query(
+          `UPDATE loans
+           SET status = 'rejected', approved_by = $1, approved_at = CURRENT_DATE,
+               notes = CONCAT(COALESCE(notes, ''), E'\nRejection reason: ', $2), updated_at = NOW()
+           WHERE loan_id = $3 RETURNING *`,
+          [req.user.user_id, reason.trim(), loanId]
+        );
+        await client.query('COMMIT');
+
+        await writeAuditLog({
+          userId: req.user.user_id,
+          action: 'REJECT_LOAN',
+          entityType: 'loans',
+          entityId: loanId,
+          ipAddress: ip,
+          afterState: result.rows[0],
+          reason: reason.trim(),
+        });
+        if (loan.phone) {
+          await sendLoanRejectionNotification({
+            phone: loan.phone,
+            fullName: loan.full_name,
+            reason: reason.trim(),
+          });
+        }
+        return res.json({ loan: result.rows[0] });
+      } catch (err) {
+        await client.query('ROLLBACK');
+        logger.error('Reject loan error', { error: err.message });
+        return res.status(500).json({ error: 'Internal server error.' });
+      } finally {
+        client.release();
+      }
+    }
+
 async function disburseLoan(req, res) {
   const { loanId } = req.params;
   const ip = req.ip || req.connection.remoteAddress;
@@ -222,4 +283,4 @@ async function getLoanSchedule(req, res) {
   }
 }
 
-module.exports = { getMemberLoans, createLoan, approveLoan, disburseLoan, getLoanSchedule };
+module.exports = { getMemberLoans, createLoan, approveLoan, rejectLoan, disburseLoan, getLoanSchedule };
