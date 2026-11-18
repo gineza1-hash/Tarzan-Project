@@ -8,7 +8,7 @@ const savingsValidation = [
   body('memberId').isUUID(),
   body('amount').isDecimal({ decimal_digits: '0,2' }).custom(v => parseFloat(v) > 0),
   body('transactionType').isIn(['deposit', 'withdrawal', 'adjustment']),
-  body('referenceCode').trim().notEmpty(),
+  body('referenceCode').optional({ checkFalsy: true }).trim().isLength({ max: 50 }),
 ];
 
 router.get('/member/:memberId', authenticate, ownDataOnly, getSavingsTransactions);

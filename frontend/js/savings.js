@@ -78,6 +78,18 @@
     return `${d.getFullYear()}-${month}-${day}`;
   }
 
+  function generateReference(type) {
+    const prefix = { deposit: 'DEP', withdrawal: 'WDR', adjustment: 'ADJ' }[type] || 'TXN';
+    const suffix = cryptoRandomHex(6).toUpperCase();
+    return `${prefix}-${suffix}`;
+  }
+
+  function cryptoRandomHex(length) {
+    const bytes = new Uint8Array(length);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  }
+
   function showNotice(message) {
     notice.textContent = message;
     notice.hidden = false;
@@ -312,9 +324,14 @@
     hideError(recordError);
     recordFor.textContent = `Member: ${memberLabel(member)}`;
     dateInput.value = todayLocal();
+    refInput.value = generateReference(typeSelect.value);
     recordDialog.showModal();
     amountInput.focus();
   }
+
+  typeSelect.addEventListener('change', () => {
+    refInput.value = generateReference(typeSelect.value);
+  });
 
   recordForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -328,11 +345,6 @@
       showError(recordError, 'Enter the amount as a number above zero, like 50000 or 2500.50.');
       return;
     }
-    if (!reference) {
-      showError(recordError, 'Enter a reference for this transaction.');
-      return;
-    }
-
     const body = {
       memberId: currentMemberId,
       amount: amountText,

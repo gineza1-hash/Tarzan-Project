@@ -2,7 +2,17 @@ const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
 const { sendDepositNotification } = require('../services/smsService');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 const DAILY_WITHDRAWAL_LIMIT = Number(process.env.USSD_DAILY_WITHDRAWAL_LIMIT_RWF || 50000);
+
+function generateSavingsReference(transactionType) {
+  const prefix = transactionType === 'deposit'
+    ? 'DEP'
+    : transactionType === 'withdrawal'
+      ? 'WDR'
+      : 'ADJ';
+  return `${prefix}-${crypto.randomBytes(6).toString('hex').toUpperCase().slice(0, 12)}`;
+}
 
 async function getSavingsTransactions(req, res) {
   const { memberId } = req.params;
@@ -31,7 +41,8 @@ async function getSavingsTransactions(req, res) {
 }
 
 async function recordSavingsTransaction(req, res) {
-  const { memberId, amount, transactionType, transactionDate, referenceCode, notes } = req.body;
+  const { memberId, amount, transactionType, transactionDate, notes } = req.body;
+  const referenceCode = String(req.body.referenceCode || '').trim() || generateSavingsReference(transactionType);
   const ip = req.ip || req.connection.remoteAddress;
 
   const client = await pool.connect();
