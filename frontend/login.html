@@ -18,25 +18,81 @@
 
     <main class="auth-main">
       <div class="auth-card">
-        <h2>Sign in</h2>
-        <p class="intro">Use the email address your administrator registered for you.</p>
 
-        <div id="login-error" class="alert alert-error" role="alert" hidden></div>
+        <div class="tabs" role="tablist" aria-label="Account">
+          <button type="button" class="tab" role="tab" id="tab-signin" aria-selected="true" aria-controls="panel-signin">Sign in</button>
+          <button type="button" class="tab" role="tab" id="tab-register" aria-selected="false" aria-controls="panel-register" tabindex="-1">Create account</button>
+        </div>
 
-        <form id="login-form" novalidate>
-          <div class="field">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" autocomplete="username" required>
-          </div>
-          <div class="field">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required>
-          </div>
-          <label class="check">
-            <input type="checkbox" id="show-password"> Show password
-          </label>
-          <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
-        </form>
+        <!-- Sign in -->
+        <section id="panel-signin" role="tabpanel" aria-labelledby="tab-signin">
+          <h2>Welcome back</h2>
+          <p class="intro">Sign in with the email address on your account.</p>
+
+          <div id="login-error" class="alert alert-error" role="alert" hidden></div>
+
+          <form id="login-form" novalidate>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="username" required>
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <label class="check">
+              <input type="checkbox" id="show-password"> Show password
+            </label>
+            <button type="submit" class="btn btn-primary" id="login-btn">Sign in</button>
+          </form>
+
+          <p class="auth-note">New here? If you are already a SACCO member, <a href="#" id="go-register">create your online account</a>.</p>
+        </section>
+
+        <!-- Create account (existing members) -->
+        <section id="panel-register" role="tabpanel" aria-labelledby="tab-register" hidden>
+          <h2>Create your account</h2>
+          <p class="intro">For SACCO members. Enter your member number and National ID so we can match you to your member record.</p>
+
+          <div id="register-error" class="alert alert-error" role="alert" hidden></div>
+
+          <form id="register-form" novalidate>
+            <div class="field">
+              <label for="r-number">Member number</label>
+              <input id="r-number" type="text" autocomplete="off" placeholder="e.g. RW-002">
+            </div>
+            <div class="field">
+              <label for="r-national">National ID</label>
+              <input id="r-national" type="text" inputmode="numeric" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="r-email">Email</label>
+              <input id="r-email" type="email" autocomplete="email">
+              <p class="hint">You will sign in with this email.</p>
+            </div>
+            <div class="field">
+              <label for="r-username">Username</label>
+              <input id="r-username" type="text" autocomplete="username" maxlength="50">
+              <p class="hint">Letters, numbers, dots, dashes and underscores.</p>
+            </div>
+            <div class="field">
+              <label for="r-password">Password</label>
+              <input id="r-password" type="password" autocomplete="new-password">
+              <p class="hint">At least 8 characters.</p>
+            </div>
+            <div class="field">
+              <label for="r-confirm">Confirm password</label>
+              <input id="r-confirm" type="password" autocomplete="new-password">
+            </div>
+            <label class="check">
+              <input type="checkbox" id="r-show"> Show passwords
+            </label>
+            <button type="submit" class="btn btn-primary" id="register-btn">Create account</button>
+          </form>
+
+          <p class="auth-note">Not a member yet? Ask your administrator or treasurer to register you first, then come back here. Already have an account? <a href="#" id="go-signin">Sign in</a>.</p>
+        </section>
+
       </div>
     </main>
   </div>

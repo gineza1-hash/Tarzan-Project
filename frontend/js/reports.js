@@ -41,6 +41,7 @@
   const ACTION_LABELS = {
     SUSPICIOUS_LOGIN: 'Suspicious login',
     CREATE_USER: 'User created',
+    SELF_REGISTER: 'Member self-registered',
     CREATE_MEMBER: 'Member created',
     UPDATE_MEMBER: 'Member updated',
     CREATE_LOAN: 'Loan created',
