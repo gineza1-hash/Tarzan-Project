@@ -24,17 +24,17 @@
           <button type="button" class="tab" role="tab" id="tab-register" aria-selected="false" aria-controls="panel-register" tabindex="-1">Create account</button>
         </div>
 
-        <!-- Sign in -->
+        <!-- Sign in: email OR phone number -->
         <section id="panel-signin" role="tabpanel" aria-labelledby="tab-signin">
           <h2>Welcome back</h2>
-          <p class="intro">Sign in with the email address on your account.</p>
+          <p class="intro">Sign in with your email or the phone number on your member record.</p>
 
           <div id="login-error" class="alert alert-error" role="alert" hidden></div>
 
           <form id="login-form" novalidate>
             <div class="field">
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" autocomplete="username" required>
+              <label for="identifier">Email or phone number</label>
+              <input id="identifier" name="identifier" type="text" autocomplete="username" placeholder="Email, or phone like 0788 123 456" required>
             </div>
             <div class="field">
               <label for="password">Password</label>
@@ -49,34 +49,26 @@
           <p class="auth-note">New here? If you are already a SACCO member, <a href="#" id="go-register">create your online account</a>.</p>
         </section>
 
-        <!-- Create account (existing members) -->
+        <!-- Create account: details first, then a code sent by SMS -->
         <section id="panel-register" role="tabpanel" aria-labelledby="tab-register" hidden>
-          <h2>Create your account</h2>
-          <p class="intro">For SACCO members. Enter your member number and National ID so we can match you to your member record.</p>
+          <h2 id="reg-title">Create your account</h2>
+          <p class="intro" id="reg-intro"></p>
 
           <div id="register-error" class="alert alert-error" role="alert" hidden></div>
 
-          <form id="register-form" novalidate>
-            <div class="field">
-              <label for="r-number">Member number</label>
-              <input id="r-number" type="text" autocomplete="off" placeholder="e.g. RW-002">
-            </div>
+          <!-- Step 1: your details -->
+          <form id="details-form" novalidate>
             <div class="field">
               <label for="r-national">National ID</label>
               <input id="r-national" type="text" inputmode="numeric" autocomplete="off">
             </div>
             <div class="field">
-              <label for="r-email">Email</label>
-              <input id="r-email" type="email" autocomplete="email">
-              <p class="hint">You will sign in with this email.</p>
+              <label for="r-phone">Phone number</label>
+              <input id="r-phone" type="tel" autocomplete="tel" placeholder="e.g. 0788 123 456">
+              <p class="hint">The number you gave the SACCO. You will also sign in with it.</p>
             </div>
             <div class="field">
-              <label for="r-username">Username</label>
-              <input id="r-username" type="text" autocomplete="username" maxlength="50">
-              <p class="hint">Letters, numbers, dots, dashes and underscores.</p>
-            </div>
-            <div class="field">
-              <label for="r-password">Password</label>
+              <label for="r-password">Choose a password</label>
               <input id="r-password" type="password" autocomplete="new-password">
               <p class="hint">At least 8 characters.</p>
             </div>
@@ -87,7 +79,26 @@
             <label class="check">
               <input type="checkbox" id="r-show"> Show passwords
             </label>
-            <button type="submit" class="btn btn-primary" id="register-btn">Create account</button>
+            <div class="field">
+              <label for="r-email">Email (optional)</label>
+              <input id="r-email" type="email" autocomplete="email">
+              <p class="hint">Only if you have one. You can sign in with your phone number instead.</p>
+            </div>
+            <button type="submit" class="btn btn-primary" id="continue-btn">Continue</button>
+          </form>
+
+          <!-- Step 2: the code we texted -->
+          <form id="verify-form" novalidate hidden>
+            <div id="dev-note" class="alert alert-warn" role="status" hidden></div>
+            <div class="field">
+              <label for="r-code">Verification code</label>
+              <input id="r-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits">
+            </div>
+            <button type="submit" class="btn btn-primary" id="verify-btn">Verify and create account</button>
+            <div class="step-actions">
+              <button type="button" class="btn btn-quiet btn-small" id="resend-btn">Resend code</button>
+              <button type="button" class="btn btn-quiet btn-small" id="back-btn">Change my details</button>
+            </div>
           </form>
 
           <p class="auth-note">Not a member yet? Ask your administrator or treasurer to register you first, then come back here. Already have an account? <a href="#" id="go-signin">Sign in</a>.</p>

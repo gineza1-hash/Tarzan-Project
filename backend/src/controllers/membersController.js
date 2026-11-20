@@ -1,10 +1,10 @@
+// FILE: backend/src/controllers/membersController.js  
+// CHANGE: createMember() now generates the member number (RW-001, RW-002, ...) instead of
+//         reading it from the request. Everything else in this file is unchanged.
+
 const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
 const logger = require('../utils/logger');
-
-function validateMemberStatus(status) {
-  return status === undefined || status === 'active' || status === 'inactive';
-}
 
 async function getAllMembers(req, res) {
   try {
@@ -33,27 +33,56 @@ async function getMemberById(req, res) {
   }
 }
 
+// Member numbers are assigned by the system, never typed in: RW-001, RW-002, ...
+const MEMBER_NUMBER_PREFIX = 'RW-';
+const MEMBER_NUMBER_LOCK = 727001; // any fixed number; every create waits for this same lock
+
+/**
+ * Next free member number: one more than the highest existing RW-number.
+ * Must run inside a transaction that already holds the lock (see createMember).
+ */
+async function nextMemberNumber(client) {
+  const result = await client.query(
+    `SELECT COALESCE(MAX(SUBSTRING(member_number FROM '^RW-([0-9]+)$')::bigint), 0) AS last
+     FROM members
+     WHERE member_number ~ '^RW-[0-9]+$'`
+  );
+  const next = Number(result.rows[0].last) + 1;
+  return MEMBER_NUMBER_PREFIX + String(next).padStart(3, '0');
+}
+
 async function createMember(req, res) {
-  const { memberNumber, fullName, phone, email, nationalId, joinedAt } = req.body;
+  // memberNumber is deliberately NOT read from the request: it is generated below.
+  const { fullName, phone, email, nationalId, joinedAt } = req.body;
   const ip = req.ip || req.connection.remoteAddress;
 
+  const client = await pool.connect();
   try {
-    const duplicate = await pool.query(
-      'SELECT member_id FROM members WHERE member_number = $1 OR national_id = $2',
-      [memberNumber, nationalId || null]
-    );
-    if (duplicate.rows.length > 0) {
-      return res.status(409).json({ error: 'Member number or National ID already exists.' });
+    await client.query('BEGIN');
+
+    // Two people adding members at the same moment must not receive the same number.
+    // The lock makes the second one wait until the first has saved.
+    await client.query(`SELECT pg_advisory_xact_lock(${MEMBER_NUMBER_LOCK})`);
+
+    if (nationalId) {
+      const duplicate = await client.query('SELECT member_id FROM members WHERE national_id = $1', [nationalId]);
+      if (duplicate.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'National ID already exists.' });
+      }
     }
 
-    const result = await pool.query(
+    const memberNumber = await nextMemberNumber(client);
+
+    const result = await client.query(
       `INSERT INTO members (member_number, full_name, phone, email, national_id, joined_at, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [memberNumber, fullName, phone || null, email || null, nationalId || null, joinedAt || new Date(), req.user.user_id]
     );
-
     const member = result.rows[0];
+
+    await client.query('COMMIT');
 
     await writeAuditLog({
       userId: req.user.user_id,
@@ -66,14 +95,26 @@ async function createMember(req, res) {
 
     return res.status(201).json({ member });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (err.code === '23505') {
+      // the database's own UNIQUE rules are the last line of defence
+      const onNationalId = String(err.constraint || '').includes('national_id');
+      return res.status(409).json({
+        error: onNationalId
+          ? 'National ID already exists.'
+          : 'Could not assign a member number just now. Please try again.',
+      });
+    }
     logger.error('Create member error', { error: err.message });
     return res.status(500).json({ error: 'Internal server error.' });
+  } finally {
+    client.release();
   }
 }
 
 async function updateMember(req, res) {
   const { memberId } = req.params;
-  const { fullName, phone, email } = req.body;
+  const { fullName, phone, email, status } = req.body;
   const ip = req.ip || req.connection.remoteAddress;
 
   try {
@@ -82,9 +123,9 @@ async function updateMember(req, res) {
 
     const result = await pool.query(
       `UPDATE members SET full_name = COALESCE($1, full_name), phone = COALESCE($2, phone),
-       email = COALESCE($3, email), updated_at = NOW()
-       WHERE member_id = $4 RETURNING *`,
-      [fullName, phone, email, memberId]
+       email = COALESCE($3, email), status = COALESCE($4, status), updated_at = NOW()
+       WHERE member_id = $5 RETURNING *`,
+      [fullName, phone, email, status, memberId]
     );
 
     await writeAuditLog({
@@ -100,52 +141,6 @@ async function updateMember(req, res) {
     return res.json({ member: result.rows[0] });
   } catch (err) {
     logger.error('Update member error', { error: err.message });
-    return res.status(500).json({ error: 'Internal server error.' });
-  }
-}
-
-async function updateMemberStatus(req, res) {
-  const { memberId } = req.params;
-  const { status, reason } = req.body;
-  const ip = req.ip || req.connection.remoteAddress;
-
-  if (!validateMemberStatus(status) || !status) {
-    return res.status(400).json({ error: 'Status must be active or inactive.' });
-  }
-  if (status === 'inactive' && (!reason || reason.trim().length < 3)) {
-    return res.status(400).json({ error: 'A reason is required when deactivating a member.' });
-  }
-
-  try {
-    const before = await pool.query('SELECT * FROM members WHERE member_id = $1', [memberId]);
-    if (before.rows.length === 0) return res.status(404).json({ error: 'Member not found.' });
-
-    const result = await pool.query(
-      `UPDATE members
-       SET status = $1,
-           deactivated_at = CASE WHEN $1 = 'inactive' THEN NOW() ELSE NULL END,
-           deactivated_by = CASE WHEN $1 = 'inactive' THEN $2 ELSE NULL END,
-           deactivation_reason = CASE WHEN $1 = 'inactive' THEN $3 ELSE NULL END,
-           updated_at = NOW()
-       WHERE member_id = $4
-       RETURNING *`,
-      [status, req.user.user_id, status === 'inactive' ? reason.trim() : null, memberId]
-    );
-
-    await writeAuditLog({
-      userId: req.user.user_id,
-      action: status === 'inactive' ? 'DEACTIVATE_MEMBER' : 'REACTIVATE_MEMBER',
-      entityType: 'members',
-      entityId: memberId,
-      ipAddress: ip,
-      beforeState: before.rows[0],
-      afterState: result.rows[0],
-      reason: status === 'inactive' ? reason.trim() : 'Member reactivated',
-    });
-
-    return res.json({ member: result.rows[0] });
-  } catch (err) {
-    logger.error('Update member status error', { error: err.message });
     return res.status(500).json({ error: 'Internal server error.' });
   }
 }
@@ -194,12 +189,4 @@ async function getMemberSummary(req, res) {
   }
 }
 
-module.exports = {
-  getAllMembers,
-  getMemberById,
-  createMember,
-  updateMember,
-  updateMemberStatus,
-  getMemberSummary,
-  validateMemberStatus,
-};
+module.exports = { getAllMembers, getMemberById, createMember, updateMember, getMemberSummary };

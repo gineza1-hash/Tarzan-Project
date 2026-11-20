@@ -100,10 +100,9 @@
     return members.filter((m) => m.logins.length === 0);
   }
 
+  /** The account is named after the person, for example "Sonia Keza Gendaneza". */
   function suggestUsername(member) {
-    const first = String(member.full_name).trim().split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (first.length >= 3) return first;
-    return String(member.member_number).toLowerCase().replace(/[^a-z0-9]/g, '');
+    return tidyName(member.full_name).slice(0, 50).trim() || String(member.member_number);
   }
 
   /** Random password from characters that are easy to tell apart when read out. */
@@ -140,7 +139,7 @@
       .map((m) => {
         const login = m.logins.length
           ? m.logins
-              .map((l) => `<div>${escapeHtml(l.username)}</div><div class="sub">${escapeHtml(l.email)}</div>`)
+              .map((l) => `<div>${escapeHtml(l.username)}</div><div class="sub">${escapeHtml(l.email || 'No email, signs in with phone')}</div>`)
               .join('')
           : '<span class="muted-text">No login yet</span>';
 

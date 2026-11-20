@@ -47,9 +47,10 @@
       <div id="form-error" class="alert alert-error" role="alert" hidden></div>
 
       <div class="form-grid">
-        <div class="field">
+        <p class="hint full" id="number-note" hidden>A member number (like RW-005) is assigned automatically when you save.</p>
+        <div class="field" id="wrap-number">
           <label for="f-number">Member number</label>
-          <input id="f-number" type="text" placeholder="e.g. RW-005">
+          <input id="f-number" type="text" readonly>
         </div>
         <div class="field">
           <label for="f-name">Full name</label>

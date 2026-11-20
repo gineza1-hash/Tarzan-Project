@@ -1,5 +1,5 @@
 /* ==========================================================
-   portal.js — member's own summary (GET /api/members/:id/summary)
+   portal.js — member's own summary (GET /api/members/:id/summary and /api/members/:id)
    ========================================================== */
 
 (function () {
@@ -9,6 +9,7 @@
   initShell('portal');
 
   const container = document.getElementById('portal');
+  const pageIntro = document.getElementById('page-intro');
 
   // A member login must be linked to a member record to have any data.
   if (!user.memberId) {
@@ -38,8 +39,18 @@
   async function load() {
     container.innerHTML = '<p class="state">Loading your account…</p>';
     try {
-      const data = await api.get(`/members/${encodeURIComponent(user.memberId)}/summary`);
-      render(data);
+      const id = encodeURIComponent(user.memberId);
+      const [summary, memberData] = await Promise.all([
+        api.get(`/members/${id}/summary`),
+        api.get(`/members/${id}`).catch(() => null), // the heading is a nicety: the figures show without it
+      ]);
+      render(summary);
+
+      // The member number is the member's ID, so show it next to their name
+      if (memberData && memberData.member) {
+        const m = memberData.member;
+        pageIntro.textContent = `${tidyName(m.full_name)}, member number ${m.member_number}.`;
+      }
     } catch (err) {
       container.innerHTML = `<div class="alert alert-error" role="alert">${escapeHtml(err.message)}</div>`;
     }

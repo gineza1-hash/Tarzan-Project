@@ -42,6 +42,8 @@
     SUSPICIOUS_LOGIN: 'Suspicious login',
     CREATE_USER: 'User created',
     SELF_REGISTER: 'Member self-registered',
+    REGISTER_CODE_SENT: 'Registration code sent',
+    REGISTER_CODE_FAILED: 'Registration code failed',
     CREATE_MEMBER: 'Member created',
     UPDATE_MEMBER: 'Member updated',
     CREATE_LOAN: 'Loan created',

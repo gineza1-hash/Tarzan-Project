@@ -26,6 +26,15 @@ function formatDateTime(value) {
   });
 }
 
+/** "SONIA KEZA GENDANEZA" -> "Sonia Keza Gendaneza", "jean-claude o'neil" -> "Jean-Claude O'Neil" */
+function tidyName(fullName) {
+  return String(fullName || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .replace(/(^|[\s'’-])(\p{L})/gu, (match, separator, letter) => separator + letter.toUpperCase());
+}
+
 function capitalize(text) {
   const s = String(text || '');
   return s.charAt(0).toUpperCase() + s.slice(1);
