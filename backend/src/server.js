@@ -58,11 +58,25 @@ app.get('/health/database', async (req, res) => {
         AND table_name IN ('users', 'members', 'login_attempts')
       ORDER BY table_name
     `);
+    const columns = await pool.query(`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND (
+          (table_name = 'users' AND column_name IN ('user_id', 'username', 'email', 'password_hash', 'role', 'member_id', 'is_active', 'last_login_at', 'last_login_ip'))
+          OR (table_name = 'login_attempts' AND column_name IN ('attempt_id', 'user_id', 'email', 'ip_address', 'user_agent', 'success', 'flagged', 'attempted_at'))
+          OR (table_name = 'members' AND column_name IN ('member_id', 'full_name', 'phone', 'status'))
+        )
+      ORDER BY table_name, column_name
+    `);
     const users = await pool.query('SELECT COUNT(*)::int AS count FROM users').catch(() => null);
     res.json({
       status: 'ok',
       tables: tables.rows.map((row) => row.table_name),
+      columns: columns.rows,
       userCount: users ? users.rows[0].count : null,
+      jwtConfigured: Boolean(process.env.JWT_SECRET),
+      databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
