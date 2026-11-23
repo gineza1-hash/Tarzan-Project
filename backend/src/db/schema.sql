@@ -25,6 +25,15 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(50);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS member_id UUID;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(45);
+
 -- ============================================================
 -- MEMBERS
 -- ============================================================
