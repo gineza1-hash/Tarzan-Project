@@ -1,0 +1,60 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure API URL
+        shell: bash
+        env:
+          TARZAN_API_URL: ${{ vars.TARZAN_API_URL }}
+        run: |
+          printf 'window.TARZAN_API_URL = %s;\n' "$(python3 -c 'import json, os; print(json.dumps(os.environ.get("TARZAN_API_URL", "").strip()))')" > frontend/js/config.js
+          cp frontend/js/config.js frontend/js/runtime-config.js
+
+      - name: Inject runtime config
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          config = '<script src="js/runtime-config.js"></script>'
+          for page in Path("frontend").glob("*.html"):
+              text = page.read_text(encoding="utf-8")
+              if 'src="js/runtime-config.js"' not in text:
+                  text = text.replace('<script src="js/api.js"', config + '\n  <script src="js/api.js"', 1)
+                  page.write_text(text, encoding="utf-8")
+          PY
+          touch frontend/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -3,7 +3,6 @@ services:
     name: tarzan-sacco-api
     runtime: docker
     rootDir: backend
-    preDeployCommand: npm run migrate
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -30,9 +29,3 @@ services:
         value: "false"
       - key: USSD_DAILY_WITHDRAWAL_LIMIT_RWF
         value: "50000"
-
-  - type: web
-    name: tarzan-sacco
-    runtime: static
-    rootDir: frontend
-    staticPublishPath: .
