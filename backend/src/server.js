@@ -13,6 +13,7 @@ const repaymentsRoutes = require('./routes/repayments');
 const reportsRoutes    = require('./routes/reports');
 const ussdRoutes       = require('./routes/ussd');
 const withdrawalRoutes = require('./routes/withdrawals');
+const pool = require('./db/pool');
 const PORT = process.env.PORT || 5000;
 
 function createApp() {
@@ -47,6 +48,31 @@ app.use(express.urlencoded({ extended: true })); // Required for USSD form-encod
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', app: process.env.APP_NAME, timestamp: new Date().toISOString() }));
+app.get('/health/database', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    const tables = await pool.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name IN ('users', 'members', 'login_attempts')
+      ORDER BY table_name
+    `);
+    const users = await pool.query('SELECT COUNT(*)::int AS count FROM users').catch(() => null);
+    res.json({
+      status: 'ok',
+      tables: tables.rows.map((row) => row.table_name),
+      userCount: users ? users.rows[0].count : null,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      error: err.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
 
 // Routes
 app.use('/api/auth',       authLimiter, authRoutes);
