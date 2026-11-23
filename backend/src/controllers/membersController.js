@@ -6,6 +6,10 @@ const pool = require('../db/pool');
 const { writeAuditLog } = require('../middleware/audit');
 const logger = require('../utils/logger');
 
+function validateMemberStatus(status) {
+  return status === undefined || status === 'active' || status === 'inactive';
+}
+
 async function getAllMembers(req, res) {
   try {
     const result = await pool.query(
@@ -117,6 +121,10 @@ async function updateMember(req, res) {
   const { fullName, phone, email, status } = req.body;
   const ip = req.ip || req.connection.remoteAddress;
 
+  if (!validateMemberStatus(status)) {
+    return res.status(400).json({ error: 'Status must be active or inactive.' });
+  }
+
   try {
     const before = await pool.query('SELECT * FROM members WHERE member_id = $1', [memberId]);
     if (before.rows.length === 0) return res.status(404).json({ error: 'Member not found.' });
@@ -189,4 +197,4 @@ async function getMemberSummary(req, res) {
   }
 }
 
-module.exports = { getAllMembers, getMemberById, createMember, updateMember, getMemberSummary };
+module.exports = { getAllMembers, getMemberById, createMember, updateMember, getMemberSummary, validateMemberStatus };

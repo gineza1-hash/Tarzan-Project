@@ -3,8 +3,11 @@
    Needs auth.js loaded first.
    ========================================================== */
 
-// Change this if your backend runs somewhere else.
-const API_BASE = 'http://localhost:5000/api';
+const LOCAL_API_BASE = 'http://localhost:5000/api';
+const PRODUCTION_API_BASE = 'https://tarzan-sacco-api.onrender.com/api';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? LOCAL_API_BASE
+  : (window.TARZAN_API_URL || PRODUCTION_API_BASE);
 
 class ApiError extends Error {
   constructor(message, status, details) {
