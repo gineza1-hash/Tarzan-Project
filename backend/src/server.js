@@ -88,6 +88,45 @@ app.get('/health/database', async (req, res) => {
   }
 });
 
+app.post('/health/login-diagnostic', express.json(), async (req, res) => {
+  const bcrypt = require('bcryptjs');
+  const identifier = String(req.body.identifier || '').trim();
+  try {
+    if (!identifier) {
+      return res.status(400).json({ status: 'error', error: 'identifier is required' });
+    }
+    const candidates = identifier.includes('@')
+      ? await pool.query(
+          'SELECT user_id, username, email, password_hash, role, member_id, is_active, last_login_ip FROM users WHERE email = $1',
+          [identifier]
+        )
+      : await pool.query(
+          'SELECT user_id, username, email, password_hash, role, member_id, is_active, last_login_ip FROM users WHERE username = $1',
+          [identifier]
+        );
+
+    let passwordMatch = null;
+    if (candidates.rows.length === 1) {
+      passwordMatch = await bcrypt.compare(String(req.body.password || ''), candidates.rows[0].password_hash);
+    }
+
+    res.json({
+      status: 'ok',
+      candidateCount: candidates.rows.length,
+      passwordMatch,
+      jwtConfigured: Boolean(process.env.JWT_SECRET),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      stage: 'login-diagnostic',
+      error: err.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // Routes
 app.use('/api/auth',       authLimiter, authRoutes);
 app.use('/api/members',    membersRoutes);
