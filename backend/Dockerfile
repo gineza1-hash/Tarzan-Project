@@ -7,4 +7,4 @@ COPY src ./src
 
 ENV NODE_ENV=production
 EXPOSE 5000
-CMD ["node", "src/server.js"]
+CMD ["sh", "-c", "node src/db/migrate.js && if [ \"$SEED_DEMO_DATA\" = \"true\" ]; then node src/db/seed.js; fi && exec node src/server.js"]

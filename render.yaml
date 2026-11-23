@@ -27,5 +27,7 @@ services:
         sync: false
       - key: USSD_DEMO_DEPOSITS
         value: "false"
+      - key: SEED_DEMO_DATA
+        value: "false"
       - key: USSD_DAILY_WITHDRAWAL_LIMIT_RWF
         value: "50000"
