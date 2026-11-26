@@ -63,3 +63,5 @@ js/portal.js      member summary data
 ```
 
 Script order matters on every page: `auth.js`, `api.js`, `utils.js`, then `layout.js`, then the page's own script.
+
+Demo Link: https://youtu.be/9wJ0Cc-5MYI
